@@ -20,9 +20,8 @@ router.post('/bookservice', async (req, res, next) => {
     req.body.sharedBy = []
 
     db.ServiceBooking.create(req.body)
-        .then(booking => {
+        .then(async booking => {
             try {
-
                 // Service Owner Booking
                 var owner = await db.User.findById(req.body.owner).populate('bookings').exec()
                 var owner_booking_data = {
@@ -32,26 +31,26 @@ router.post('/bookservice', async (req, res, next) => {
                     email: owner.email
                 }
                 var owner_booking = await db.Booking_Customer.create(owner_booking_data)
-                owner.bookings.push(owner_booking)
-                booking.serviceSharedBy.push(owner_booking)
-                owner.save()
+                await owner.bookings.push(owner_booking)
+                await owner.save()
+
 
                 // SharedBy Customers Booking
-                sharedBy.array.forEach(customer => {
-                    var cust = await db.User.findOne({ 'email': customer }).populate('bookings').exec()
+                for (let i = 0; i < sharedBy.length; i++) {
+                    var cust = await db.User.findOne({ 'email': sharedBy[i] }).populate('bookings').exec()
                     var cust_booking_data = {
                         booking: booking._id,
                         customer: cust._id,
-                        status: 'Pending', 
+                        status: 'Pending',
                         email: customer
                     }
                     var cust_booking = await db.Booking_Customer.create(cust_booking_data)
-                    cust.bookings.push(cust_booking)
-                    booking.serviceSharedBy.push(cust_booking)
-                    cust.save()
-                });
+                    await cust.bookings.push(cust_booking)
+                    await booking.serviceSharedBy.push(cust_booking)
+                    await cust.save()
+                }
 
-                booking.save()
+                await booking.save()
                 res.status(200).send("Booking Confirmed")
 
             } catch (err) {
@@ -78,13 +77,32 @@ router.post('/changestatus', async (req, res, next) => {
 // Get Bookings of Customer
 router.get('/getcustomerbooking/:customer_id/:status', async (req, res, next) => {
     try {
-        var customer = await db.User.findById(req.params.customer_id).populate({path:'bookings', populate: {path: 'booking', populate: 'service serviceSharedBy'} })
-        var accepted_booking = customer.bookings.filter(booking => {
-            return booking.status === req.params.status
-        })
-        res.status(200).send(accepted_booking)
+        var bookings = await db.Booking_Customer.find({ customer: req.params.customer_id, status: req.params.status }).populate({ path: 'booking', populate: 'service serviceSharedBy' }).exec()
+        res.status(200).send(bookings)
     } catch (err) {
         next(err)
     }
 })
 
+// Get Service Info and Customer Emails
+router.get('/getserviceinfo/:service_id', async (req, res, next) => {
+    db.Service.findById(req.params.service_id)
+        .then(service => {
+            var customers = db.User.find({ hotel: service.hotel })
+            var emails = []
+            for (var i = 0; i < customers.length; i++) {
+                emails.push(customers[i].email)
+            }
+            resBody = {
+                emails,
+                service
+            }
+            res.status(200).send(resBody)
+        }
+        ).catch(err => {
+            next(err)
+        })
+})
+
+
+module.exports = router;

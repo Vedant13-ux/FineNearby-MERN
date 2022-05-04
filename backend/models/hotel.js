@@ -13,7 +13,7 @@ const hotelSchema = new mongoose.Schema({
         state: String,
         zip: String
     },
-    cutsomers: [
+    customers: [
         {
             type: mongoose.Schema.Types.ObjectId,
             ref: 'User'
@@ -28,17 +28,4 @@ const hotelSchema = new mongoose.Schema({
 });
 
 
-hotelSchema.pre('save', async function (next) {
-	try {
-		if (!this.isModified('password')) {
-			return next();
-		}
-		const secretToken = crypto.randomBytes(64).toString('hex');
-		this.secretToken = secretToken;
-		return next();
-
-	} catch (err) {
-		next(err);
-	}
-});
 module.exports = mongoose.model('Hotel', hotelSchema);

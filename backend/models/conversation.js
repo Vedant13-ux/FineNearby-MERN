@@ -21,4 +21,13 @@ const convSchema = new mongoose.Schema({
 //         next(error)
 //     }
 // })
+
+convSchema.pre('remove', async (next) => {
+    try {
+        await this.model('Message').deleteMany({ conversationId: this._id })
+        return next()
+    } catch (error) {
+        next(error)
+    }
+})
 module.exports = mongoose.model('Conversation', convSchema)

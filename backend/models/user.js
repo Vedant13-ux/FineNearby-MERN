@@ -14,10 +14,12 @@ var userSchema = new mongoose.Schema({
     },
     password: {
         type: String,
-        required: true
     },
-    image: String,
-    imageId: String,
+    photo: {
+        type: String,
+        default: 'https://cdn.pixabay.com/photo/2016/08/08/09/17/avatar-1577909_1280.png'
+    },
+    photoId: String,
     created: {
         type: Date,
         default: Date.now
@@ -25,6 +27,7 @@ var userSchema = new mongoose.Schema({
     hotel: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Hotel',
+        required: true
     },
     posts: [
         {
@@ -37,7 +40,13 @@ var userSchema = new mongoose.Schema({
             type: mongoose.Schema.Types.ObjectId,
             ref: 'Booking_Customer'
         }
-    ]
+    ],
+    interactions: [
+        {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'Interaction'
+        }
+    ],
 
 });
 userSchema.methods.comparePassword = async function (password, next) {
@@ -63,4 +72,16 @@ userSchema.pre('save', async function (next) {
         next(err);
     }
 });
+
+userSchema.pre('remove', async function (next) {
+    try {
+        await this.model('Post').deleteMany({ user: this._id });
+        return next();
+    } catch (err) {
+        next(err);
+    }
+});
+
+
+
 module.exports = mongoose.model('User', userSchema);

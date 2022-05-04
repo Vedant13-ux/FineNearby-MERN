@@ -24,7 +24,7 @@ const errorHandler = require('./handlers/errorHandler');
 require('dotenv').config();
 
 // Middleware
-const { loginRequired, ensureCorrectUser, correctAccess } = require('./middleware');
+const { loginRequired, ensureCorrectUser, correctAccess, checkHotelSecret } = require('./middleware');
 
 // Body Parser
 app.use(bodyParser.json());
@@ -43,14 +43,17 @@ const authRoutes = require('./routes/auth');
 // const communityRoutes = require('./routes/community.js');
 // const userRoutes = require('./routes/user');
 // const messageRoutes = require('./routes/messaging')
-// const eventRoutes = require('./routes/events')
+const serviceRoutes = require('./routes/service')
+const hotelRoutes = require('./routes/hotel')
+const adminRoutes = require('./routes/admin')
 const refreshRoute = require('./routes/refresh')
 
 // Incuding Routes
 app.use('/api/auth', authRoutes);
 // app.use('/api/:secureId/community', loginRequired, ensureCorrectUser, communityRoutes);
-// app.use('/api/:secureId/internship', loginRequired, ensureCorrectUser, internshipRoutes);
-// app.use('/api/:secureId/events', eventRoutes);
+app.use('/api/:secureId/service', loginRequired, ensureCorrectUser, serviceRoutes);
+app.use('/api/admin', adminRoutes);
+app.use('/api/hotel/:hotel_id', checkHotelSecret,  hotelRoutes);
 // app.use('/api/:secureId', loginRequired, ensureCorrectUser, userRoutes)
 app.use(refreshRoute)
 

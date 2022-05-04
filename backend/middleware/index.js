@@ -57,4 +57,25 @@ exports.correctAccess = function (req, res, next) {
     }
 }
 
+exports.checkHotelSecret = function (req, res, next) {
+    const secretToken = req.headers.api_key    
+    console.log(secretToken,req.params.hotel_id )
+    db.Hotel.findOne({
+        _id: req.params.hotel_id,
+        secretToken
+    })
+        .then(hotel => {
+            if (hotel) {
+                return next();
+            } else {
+                return next({
+                    status: 401,
+                    message: 'Unauthorized'
+                })
+            }
+        })
+        .catch(err => {
+            next(err)
+        })
+}
 
