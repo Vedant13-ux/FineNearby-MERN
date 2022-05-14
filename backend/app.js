@@ -33,16 +33,16 @@ app.use(cors());
 
 // Database
 require('./models/index');
-// require('./Chat')(io);
+require('./Chat')(io);
 
 // require('./seedDB')();
 
 
 // Routes
 const authRoutes = require('./routes/auth');
-// const communityRoutes = require('./routes/community.js');
-// const userRoutes = require('./routes/user');
-// const messageRoutes = require('./routes/messaging')
+const communityRoutes = require('./routes/community.js');
+const userRoutes = require('./routes/user');
+const messageRoutes = require('./routes/messaging')
 const serviceRoutes = require('./routes/service')
 const hotelRoutes = require('./routes/hotel')
 const adminRoutes = require('./routes/admin')
@@ -50,14 +50,14 @@ const refreshRoute = require('./routes/refresh')
 
 // Incuding Routes
 app.use('/api/auth', authRoutes);
-// app.use('/api/:secureId/community', loginRequired, ensureCorrectUser, communityRoutes);
+app.use('/api/:secureId/community', loginRequired, ensureCorrectUser, communityRoutes);
 app.use('/api/:secureId/service', loginRequired, ensureCorrectUser, serviceRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/hotel/:hotel_id', checkHotelSecret,  hotelRoutes);
-// app.use('/api/:secureId', loginRequired, ensureCorrectUser, userRoutes)
+app.use('/api/:secureId/user', loginRequired, ensureCorrectUser, userRoutes)
 app.use(refreshRoute)
 
-// app.use('/api/:secureId/message', loginRequired, ensureCorrectUser, messageRoutes)
+app.use('/api/:secureId/message', loginRequired, ensureCorrectUser, messageRoutes)
 
 
 

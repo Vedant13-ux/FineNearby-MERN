@@ -41,7 +41,17 @@ hotel_data = [
                 "description": "Lorem Ipsum akhjsdjka jshdg jhasdasd",
                 "price": 100
             }
-            
+
         ]
-    }
+    },
+
+    post_data = [
+        {
+            "content": "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit",
+            "image": "https://images.unsplash.com/photo-1625244724120-1fd1d34d00f6?ixlib=rb-1.2.1&ixid=MnwxMjA3fDB8MHxzZWFyY2h8MXx8aG90ZWxzfGVufDB8fDB8fA%3D%3D&w=1000&q=80",
+            "author": "62729e014533fff6509bdaa4",
+            "hotel": "627270431e03598840498dd1"
+
+        }
+    ]
 ]

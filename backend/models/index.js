@@ -27,4 +27,6 @@ module.exports.Interaction = require('./interaction');
 module.exports.ServiceBooking = require('./serviceBooking');
 module.exports.Service = require('./service');
 module.exports.Booking_Customer = require('./booking_customer')
+module.exports.Hashtag = require('./hashtag');
+
 

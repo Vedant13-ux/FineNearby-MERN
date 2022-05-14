@@ -23,7 +23,11 @@ var postSchema = new mongoose.Schema({
 			type: mongoose.Schema.Types.ObjectId,
 			ref: 'User'
 		}
-	]
+	],
+	hotel: {
+		type: mongoose.Schema.Types.ObjectId,
+		ref: 'Hotel'
+	}
 });
 
 module.exports = mongoose.model('Post', postSchema);

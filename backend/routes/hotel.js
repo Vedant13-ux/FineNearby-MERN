@@ -27,15 +27,13 @@ var upload = multer({ storage: storage, fileFilter: imageFilter });
 
 // Add Customer 
 router.post('/addcustomer', upload.single('file'), async (req, res, next) => {
-  console.log(req.file.path)
   try {
-    req.body.emailToken = crypto.randomBytes(64).toString('hex');
     // req.body.password = crypto.randomBytes(8).toString('hex');
     req.body.password = '1234';
 
     const newUser = await db.User.create(req.body)
 
-    if (req.file.path) {
+    if (req.file) {
       var result = await cloudinary.v2.uploader.upload(req.file.path);
       newUser.photoId = result.public_id;
       newUser.photo = result.secure_url;
@@ -79,10 +77,35 @@ router.post('/addcustomer', upload.single('file'), async (req, res, next) => {
 })
 
 // Remove a Customer
+router.delete('/removecustomer/:email', async (req, res, next) => {
+  try {
+    var user = await db.User.findOne({ email: req.params.email }).populate({ path: 'interactions', populate: { path: 'otherUser', populate: 'interactions' } });
+    var hotel = await db.Hotel.findById(user.hotel);
+    await hotel.customers.pull(user);
+    var user_interactions = user.interactions;
 
+    for (var i = 0; i < user_interactions.length; i++) {
+      var conversation = user_interactions[i].conversation;
+      var otherUser = user_interactions[i].otherUser;
+      otherUserInteraction = otherUser.interactions.filter(function (interaction) {
+        return interaction.conversation.toString() === conversation.toString();
+      })
+      await otherUser.interactions.pull(otherUserInteraction[0]);
+      await otherUser.save();
+      await db.Conversation.findByIdAndDelete(conversation);
+    }
+    await hotel.save();
+    await user.remove();
+    return res.status(200).send('Customer Removed Successfully')
+  } catch (err) {
+    return next(
+      err
+    );
+  }
+})
 
 // Get Customer List
-router.get('/get/:hotel_id', (req, res, next) => {
+router.get('/getcustomers/:hotel_id', (req, res, next) => {
   db.User.find({ hotel: req.params.hotel_id })
     .then(customers => {
       res.status(200).send(customers)
@@ -93,8 +116,8 @@ router.get('/get/:hotel_id', (req, res, next) => {
 })
 
 // Get Customer Info
-router.get('/get/:email', (req, res, next) => {
-  db.User.findOne({ email: req.params.email })
+router.get('/getinfo/:email', (req, res, next) => {
+  db.User.findOne({ email: req.params.email }, '-password')
     .then(customer => {
       res.status(200).send(customer)
     })
@@ -105,12 +128,27 @@ router.get('/get/:email', (req, res, next) => {
 
 
 // Update Services
-router.put('/update/:hotel_id/:service', async (req, res, next) => {
+router.put('/updateservice/:hotel_id/:service_name', async (req, res, next) => {
   try {
     var oldService = await db.Service.findOne({ hotel: req.params.hotel_id, name: req.params.service })
     var newService = { ...oldService, ...req.body }
     await db.Service.findByIdAndUpdate(oldService._id, newService)
     return res.status(200).send('Updated Successfully')
+  } catch (err) {
+    next(err)
+  }
+})
+
+// Get Cutsomer Billing
+router.get('/getbilling/:email', async (req, res, next) => {
+  try {
+    var bookings = await db.Booking_Customer.find({ email: req.params.email, status: 'Accepted' }).populate({ path: 'booking', populate: 'service' }).exec()
+
+    var bill = 0
+    for (let i = 0; i < bookings.length; i++) {
+      bill += bookings[i].booking.service.price
+    }
+    res.status(200).send({email: req.params.email, bill})
   } catch (err) {
     next(err)
   }

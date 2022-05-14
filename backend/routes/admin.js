@@ -6,7 +6,7 @@ const crypto = require('crypto');
 
 // Get Hotel Info
 router.get('/info/:admin_secret/:hotel_id', (req, res, next) => {
-    if (process.env.SECRET_KEY === req.params.admin_secret) {
+    if (process.env.SECRET_KEY === req.headers.admin_secret) {
         db.Hotel.findById(req.params.hotel_id)
             .then(hotel => {
                 return res.status(200).send(hotel)
@@ -23,8 +23,8 @@ router.get('/info/:admin_secret/:hotel_id', (req, res, next) => {
 })
 
 // Add New Hotel
-router.post('/add/:admin_secret', (req, res, next) => {
-    if (process.env.SECRET_KEY === req.params.admin_secret) {
+router.post('/add', (req, res, next) => {
+    if (process.env.SECRET_KEY === req.headers.admin_secret) {
         var secretToken = crypto.randomBytes(64).toString('hex');
         console.log(req.body)
         req.body.secretToken = secretToken;

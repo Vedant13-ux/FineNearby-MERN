@@ -1,6 +1,8 @@
 const express = require('express');
 const router = express.Router();
 const db = require('../models');
+const nodemailer = require('nodemailer');
+var mailOptionsImport = require('../handlers/mailOptionsPending')
 
 // Get Hotel Services 
 router.get('/get/:hotel_id', (req, res, next) => {
@@ -34,7 +36,6 @@ router.post('/bookservice', async (req, res, next) => {
                 await owner.bookings.push(owner_booking)
                 await owner.save()
 
-
                 // SharedBy Customers Booking
                 for (let i = 0; i < sharedBy.length; i++) {
                     var cust = await db.User.findOne({ 'email': sharedBy[i] }).populate('bookings').exec()
@@ -42,15 +43,35 @@ router.post('/bookservice', async (req, res, next) => {
                         booking: booking._id,
                         customer: cust._id,
                         status: 'Pending',
-                        email: customer
+                        email: sharedBy[i]
                     }
                     var cust_booking = await db.Booking_Customer.create(cust_booking_data)
                     await cust.bookings.push(cust_booking)
                     await booking.serviceSharedBy.push(cust_booking)
                     await cust.save()
                 }
-
                 await booking.save()
+
+                if (sharedBy.length > 0) {
+                    // Sending Mail to Shared Customers
+                    req.body.sharedBy = sharedBy
+                    var mailOptions = mailOptionsImport(req, process);
+                    var transporter = nodemailer.createTransport({
+                        service: 'gmail',
+                        auth: {
+                            user: 'kjsceintern@gmail.com',
+                            pass: process.env.GMAIL_APP_PASSWORD
+                        }
+                    });
+
+                    transporter.sendMail(mailOptions, (err, info) => {
+                        if (err) {
+                            return console.log(err.message);
+                        }
+                        console.log('Message Sent : %s', info.messageId);
+                        console.log('Preview URL : %s', info.getTestMessageURL(info));
+                    });
+                }
                 res.status(200).send("Booking Confirmed")
 
             } catch (err) {
@@ -63,7 +84,7 @@ router.post('/bookservice', async (req, res, next) => {
 })
 
 // Change Status of Booking
-router.post('/changestatus', async (req, res, next) => {
+router.put('/changestatus', async (req, res, next) => {
     try {
         customer_booking = await db.Booking_Customer.findById(req.body.booking_id)
         customer_booking.status = req.body.status
@@ -75,7 +96,7 @@ router.post('/changestatus', async (req, res, next) => {
 })
 
 // Get Bookings of Customer
-router.get('/getcustomerbooking/:customer_id/:status', async (req, res, next) => {
+router.get('/getcustomerbookings/:customer_id/:status', async (req, res, next) => {
     try {
         var bookings = await db.Booking_Customer.find({ customer: req.params.customer_id, status: req.params.status }).populate({ path: 'booking', populate: 'service serviceSharedBy' }).exec()
         res.status(200).send(bookings)
@@ -85,10 +106,11 @@ router.get('/getcustomerbooking/:customer_id/:status', async (req, res, next) =>
 })
 
 // Get Service Info and Customer Emails
-router.get('/getserviceinfo/:service_id', async (req, res, next) => {
+router.get('/getserviceinfo/:service_id/', async (req, res, next) => {
     db.Service.findById(req.params.service_id)
-        .then(service => {
-            var customers = db.User.find({ hotel: service.hotel })
+        .then(async service => {
+            var customers = await db.User.find({ hotel: service.hotel })
+            console.log(customers)
             var emails = []
             for (var i = 0; i < customers.length; i++) {
                 emails.push(customers[i].email)

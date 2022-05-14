@@ -17,7 +17,7 @@ var userSchema = new mongoose.Schema({
     },
     photo: {
         type: String,
-        default: 'https://cdn.pixabay.com/photo/2016/08/08/09/17/avatar-1577909_1280.png'
+        default: 'https://cdn3.iconfinder.com/data/icons/black-easy/512/538303-user_512x512.png'
     },
     photoId: String,
     created: {
@@ -75,7 +75,7 @@ userSchema.pre('save', async function (next) {
 
 userSchema.pre('remove', async function (next) {
     try {
-        await this.model('Post').deleteMany({ user: this._id });
+        await this.model('Post').deleteMany({ author: this._id });
         return next();
     } catch (err) {
         next(err);
